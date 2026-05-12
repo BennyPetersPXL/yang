@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Task 36 – NETCONF/YANG configuratie
+  Single source of truth → opgeslagen in GitHub
+
+  YANG models (uit jouw yangset op 192.168.100.20):
+    Cisco-IOS-XE-native  → hostname + GigabitEthernet interfaces
+    Cisco-IOS-XE-ospf    → /native/router/ospf (via native namespace)
+
+  YANG Tree paden (zoals je ze kent uit YANGSuite):
+    /native/hostname
+    /native/interface/GigabitEthernet/name
+    /native/interface/GigabitEthernet/ip/address/primary/address + mask
+    /native/router/ospf/id
+    /native/router/ospf/router-id
+    /native/router/ospf/network/ip + mask + area
+-->
+<config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+
+    <!-- ── /native/hostname ─────────────────────────────── -->
+    <hostname>CSR1kv-Task36</hostname>
+
+    <!-- ── /native/interface/GigabitEthernet ───────────── -->
+    <interface>
+
+      <!-- GigabitEthernet1 – actief op 192.168.100.20 -->
+      <GigabitEthernet>
+        <name>1</name>
+        <description>LAN – management en OSPF backbone</description>
+        <ip>
+          <address>
+            <primary>
+              <address>192.168.100.20</address>
+              <mask>255.255.255.0</mask>
+            </primary>
+          </address>
+        </ip>
+      </GigabitEthernet>
+
+      <!-- GigabitEthernet2 – tweede interface (vereiste task) -->
+      <GigabitEthernet>
+        <name>2</name>
+        <description>WAN – P2P link</description>
+        <ip>
+          <address>
+            <primary>
+              <address>10.0.0.1</address>
+              <mask>255.255.255.252</mask>
+            </primary>
+          </address>
+        </ip>
+      </GigabitEthernet>
+
+    </interface>
+
+    <!-- ── /native/router/ospf ──────────────────────────── -->
+    <router>
+      <ospf xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ospf">
+        <id>1</id>
+        <router-id>1.1.1.1</router-id>
+
+        <!-- LAN subnet – zelfde aanpak als Task 27 -->
+        <network>
+          <ip>192.168.100.0</ip>
+          <mask>0.0.0.255</mask>
+          <area>0</area>
+        </network>
+
+        <!-- WAN P2P subnet -->
+        <network>
+          <ip>10.0.0.0</ip>
+          <mask>0.0.0.3</mask>
+          <area>0</area>
+        </network>
+
+      </ospf>
+    </router>
+
+  </native>
+</config>
