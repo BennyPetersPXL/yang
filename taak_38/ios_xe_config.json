@@ -1,0 +1,53 @@
+{
+  "Cisco-IOS-XE-native:native": {
+    "hostname": "CSR1kv-Task38",
+    "interface": {
+      "GigabitEthernet": [
+        {
+          "name": "1",
+          "description": "LAN - Task38",
+          "ip": {
+            "address": {
+              "primary": {
+                "address": "192.168.100.20",
+                "mask": "255.255.255.0"
+              }
+            }
+          }
+        },
+        {
+          "name": "2",
+          "description": "WAN - Task38",
+          "ip": {
+            "address": {
+              "primary": {
+                "address": "10.0.0.1",
+                "mask": "255.255.255.0"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "router": {
+      "ospf": [
+        {
+          "id": 1,
+          "router-id": "1.1.1.1",
+          "network": [
+            {
+              "ip": "192.168.100.0",
+              "mask": "0.0.0.255",
+              "area": 0
+            },
+            {
+              "ip": "10.0.0.0",
+              "mask": "0.0.0.255",
+              "area": 0
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
