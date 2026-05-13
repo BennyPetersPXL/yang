@@ -25,10 +25,9 @@
                 "mask": "255.255.255.0"
               }
             }
-          }
+          },
+          "shutdown":[null]
         }
-      ]
-    },
     "router": {
       "Cisco-IOS-XE-ospf:ospf": [
         {
