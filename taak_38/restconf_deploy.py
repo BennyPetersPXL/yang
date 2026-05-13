@@ -19,7 +19,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # ──────────────────────────────────────────────
 DEVICE_IP  = "192.168.100.20"
 USERNAME   = "cisco"
-PASSWORD   = "cisco123"
+PASSWORD   = "cisco123!"
 
 GITHUB_URL = "https://raw.githubusercontent.com/BennyPetersPXL/yang/refs/heads/main/taak_38/ios_xe_config.json"
 
