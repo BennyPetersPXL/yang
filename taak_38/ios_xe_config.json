@@ -28,7 +28,7 @@
   },
   "shutdown": [null]
 }
-    "router": {
+  "router": {
       "Cisco-IOS-XE-ospf:ospf": [
         {
           "id": 1,
