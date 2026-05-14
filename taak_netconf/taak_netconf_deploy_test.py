@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Taak NETCONF - End-to-end automatisering
-Router: LAB-RA04-C02-R01 (192.168.100.20)
+Virtuele router: CSR1000v (192.168.100.20)
 """
 
 import sys
@@ -38,7 +38,10 @@ def pretty_print_xml(xml_string):
 def parse_xml(xml_string):
     """Basisvaardigheid: XML deserialiseren naar Python dictionary."""
     ns = {"ios": "http://cisco.com/ns/yang/Cisco-IOS-XE-native"}
-    root = ET.fromstring(xml_string)
+    try:
+        root = ET.fromstring(xml_string)
+    except Exception:
+        return {}
     result = {}
     hostname = root.find(".//ios:hostname", ns)
     if hostname is not None:
@@ -54,22 +57,19 @@ def parse_xml(xml_string):
     return result
 
 
-def ssh_patch():
-    """Paramiko patch voor ssh-rsa keys op oudere Cisco toestellen."""
+def maak_verbinding():
+    """NETCONF verbinding openen via SSH poort 830 met ssh-rsa patch."""
     oi = paramiko.Transport.__init__
     def patch(self, *a, **k):
         oi(self, *a, **k)
         self._preferred_keys = ["ssh-rsa", "rsa-sha2-256", "rsa-sha2-512"]
     paramiko.Transport.__init__ = patch
-
-
-def verificatie():
-    """Basisvaardigheid: GET uitvoeren, pretty-print XML en parsen naar dictionary."""
     try:
         conn = manager.connect(**DEVICE)
     except Exception as e:
-        print("    Verificatie mislukt: {}".format(e))
-        return
+        sys.exit("FOUT - Verbinding mislukt: {}".format(e))
+    print("    Verbonden, session-id: {}".format(conn.session_id))
+    return conn
 
 
 def deploy(conn, config_xml):
@@ -79,29 +79,21 @@ def deploy(conn, config_xml):
         conn.lock(target="candidate")
         locked = True
         print("    Candidate locked")
-
         conn.edit_config(target="candidate", config=config_xml)
         print("    edit-config geslaagd")
-
         response = conn.commit()
-
-        # Basisvaardigheid: NETCONF statusfeedback + pretty-print XML
         print("\n    NETCONF response (pretty-print XML):")
         print("    " + "-" * 40)
         for regel in pretty_print_xml(str(response)).splitlines():
             print("    " + regel)
         print("    " + "-" * 40)
-
         if "<ok" in str(response):
             print("    Statusfeedback: <ok/> ontvangen - commit geslaagd")
-
     except RPCError as e:
-        # Basisvaardigheid: foutafhandeling met discard-changes
         print("FOUT - {}: {}".format(e.type, e.tag))
         conn.discard_changes()
         print("discard-changes uitgevoerd - running config ongewijzigd")
         sys.exit(1)
-
     finally:
         if locked:
             conn.unlock(target="candidate")
@@ -110,26 +102,20 @@ def deploy(conn, config_xml):
 
 def verificatie():
     """Basisvaardigheid: GET uitvoeren, pretty-print XML en parsen naar dictionary."""
-    conn = verbind()
-    filter_xml = """
-    <filter type="subtree">
+    conn = maak_verbinding()
+    filter_xml = """<filter type="subtree">
       <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
         <hostname/>
         <interface/>
       </native>
     </filter>"""
-
     resultaat = conn.get_config(source="running", filter=filter_xml)
     conn.close_session()
-
-    # Pretty-print XML tonen
     print("\n    Running config (pretty-print XML):")
     print("    " + "-" * 40)
     for regel in pretty_print_xml(str(resultaat)).splitlines()[:20]:
         print("    " + regel)
     print("    " + "-" * 40)
-
-    # Deserialiseren naar Python dictionary
     parsed = parse_xml(str(resultaat))
     print("\n    Geparseerde datastructuur (Python dictionary):")
     print("    hostname:  {}".format(parsed.get("hostname")))
@@ -142,7 +128,6 @@ def main():
     print("Taak NETCONF - {}".format(DEVICE["host"]))
     print("=" * 45)
 
-    # Stap 1: Config ophalen van GitHub (single source of truth)
     print("\n[1] Config ophalen van GitHub")
     try:
         r = requests.get(GITHUB_URL, timeout=15)
@@ -151,15 +136,12 @@ def main():
         sys.exit("FOUT: {}".format(e))
     print("    {} bytes opgehaald".format(len(r.text)))
 
-    # Stap 2: Verbinding openen
     print("\n[2] NETCONF verbinding openen")
-    conn = verbind()
+    conn = maak_verbinding()
 
-    # Stap 3: Deployen via candidate datastore
     print("\n[3] Deployen via candidate datastore")
     deploy(conn, r.text)
 
-    # Stap 4: Verificatie
     print("\n[4] Verificatie via NETCONF GET")
     verificatie()
 
