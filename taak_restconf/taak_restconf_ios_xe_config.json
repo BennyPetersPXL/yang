@@ -1,0 +1,25 @@
+{
+  "hostname": "LAB-RA04-C02-R01",
+  "interfaces": [
+    {
+      "name": "0/0/0.1",
+      "description": "Management VLAN1",
+      "address": "172.17.4.65",
+      "mask": "255.255.255.240"
+    },
+    {
+      "name": "0/0/1",
+      "description": "WAN uplink",
+      "address": "10.199.65.108",
+      "mask": "255.255.255.224"
+    }
+  ],
+  "ospf": {
+    "id": 1,
+    "router_id": "172.17.4.65",
+    "networks": [
+      {"ip": "172.17.4.64", "mask": "0.0.0.15", "area": 0},
+      {"ip": "10.199.65.96", "mask": "0.0.0.31", "area": 0}
+    ]
+  }
+}
