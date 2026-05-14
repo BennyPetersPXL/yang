@@ -24,8 +24,7 @@ DEVICE = {
     "allow_agent":    False,
 }
 
-GITHUB_URL = "https://raw.githubusercontent.com/BennyPetersPXL/yang/refs/heads/main/hardware/taak_netconf/ios_xe_config.xml"
-
+GITHUB_URL = "https://raw.githubusercontent.com/BennyPetersPXL/yang/refs/heads/main/taak_netconf/taak_netconf_ios_xe_config.xml"
 
 def pretty_print_xml(xml_string):
     """Basisvaardigheid: XML pretty-print via toprettyxml."""
