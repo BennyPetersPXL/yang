@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
+  <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+
+    <hostname>LAB-RA04-C02-R01</hostname>
+
+    <interface>
+      <GigabitEthernet>
+        <name>0/0/0.1</name>
+        <description>Management VLAN1</description>
+        <ip>
+          <address>
+            <primary>
+              <address>172.17.4.65</address>
+              <mask>255.255.255.240</mask>
+            </primary>
+          </address>
+        </ip>
+      </GigabitEthernet>
+
+      <GigabitEthernet>
+        <name>0/0/1</name>
+        <description>WAN uplink</description>
+        <ip>
+          <address>
+            <primary>
+              <address>10.199.65.108</address>
+              <mask>255.255.255.224</mask>
+            </primary>
+          </address>
+        </ip>
+      </GigabitEthernet>
+    </interface>
+
+    <router>
+      <ospf xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ospf">
+        <id>1</id>
+        <router-id>172.17.4.65</router-id>
+        <network>
+          <ip>172.17.4.64</ip>
+          <mask>0.0.0.15</mask>
+          <area>0</area>
+        </network>
+        <network>
+          <ip>10.199.65.96</ip>
+          <mask>0.0.0.31</mask>
+          <area>0</area>
+        </network>
+      </ospf>
+    </router>
+
+  </native>
+</config>
