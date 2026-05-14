@@ -1,0 +1,125 @@
+---
+- name: Task 39 - RESTCONF/YANG Deployment via Ansible
+  hosts: localhost
+  gather_facts: no
+
+  vars:
+    device_ip: "192.168.100.20"
+    username: "cisco"
+    password: "cisco123"
+    github_url: "https://raw.githubusercontent.com/BennyPetersPXL/yang/refs/heads/main/taak_39/ios_xe_config.json"
+    base_url: "https://{{ device_ip }}/restconf/data/Cisco-IOS-XE-native:native"
+    headers:
+      Content-Type: "application/yang-data+json"
+      Accept: "application/yang-data+json"
+
+  tasks:
+
+    - name: Stap 1 - Haal config op van GitHub
+      uri:
+        url: "{{ github_url }}"
+        method: GET
+        return_content: yes
+      register: github_config
+
+    - name: Stap 2 - Sla config op als variabele
+      set_fact:
+        config: "{{ github_config.content | from_json }}"
+
+    - name: Stap 3 - Debug config
+      debug:
+        msg: "Config opgehaald: hostname={{ config.hostname }}"
+
+    - name: Stap 4 - Deploy hostname
+      uri:
+        url: "{{ base_url }}/hostname"
+        method: PUT
+        user: "{{ username }}"
+        password: "{{ password }}"
+        force_basic_auth: yes
+        headers: "{{ headers }}"
+        body_format: json
+        body:
+          Cisco-IOS-XE-native:hostname: "{{ config.hostname }}"
+        validate_certs: no
+        status_code: [200, 201, 204]
+
+    - name: Stap 5 - Deploy GigabitEthernet1
+      uri:
+        url: "{{ base_url }}/interface/GigabitEthernet=1"
+        method: PUT
+        user: "{{ username }}"
+        password: "{{ password }}"
+        force_basic_auth: yes
+        headers: "{{ headers }}"
+        body_format: json
+        body:
+          Cisco-IOS-XE-native:GigabitEthernet:
+            - name: "1"
+              description: "{{ config.interfaces[0].description }}"
+              ip:
+                address:
+                  primary:
+                    address: "{{ config.interfaces[0].address }}"
+                    mask: "{{ config.interfaces[0].mask }}"
+        validate_certs: no
+        status_code: [200, 201, 204]
+
+    - name: Stap 6 - Deploy GigabitEthernet2
+      uri:
+        url: "{{ base_url }}/interface/GigabitEthernet=2"
+        method: PUT
+        user: "{{ username }}"
+        password: "{{ password }}"
+        force_basic_auth: yes
+        headers: "{{ headers }}"
+        body_format: json
+        body:
+          Cisco-IOS-XE-native:GigabitEthernet:
+            - name: "2"
+              description: "{{ config.interfaces[1].description }}"
+              ip:
+                address:
+                  primary:
+                    address: "{{ config.interfaces[1].address }}"
+                    mask: "{{ config.interfaces[1].mask }}"
+        validate_certs: no
+        status_code: [200, 201, 204]
+
+    - name: Stap 7 - Deploy OSPF
+      uri:
+        url: "{{ base_url }}/router/ospf=1"
+        method: PUT
+        user: "{{ username }}"
+        password: "{{ password }}"
+        force_basic_auth: yes
+        headers: "{{ headers }}"
+        body_format: json
+        body:
+          Cisco-IOS-XE-ospf:ospf:
+            - id: "{{ config.ospf.id }}"
+              router-id: "{{ config.ospf.router_id }}"
+              network:
+                - ip: "{{ config.ospf.networks[0].ip }}"
+                  mask: "{{ config.ospf.networks[0].mask }}"
+                  area: "{{ config.ospf.networks[0].area }}"
+                - ip: "{{ config.ospf.networks[1].ip }}"
+                  mask: "{{ config.ospf.networks[1].mask }}"
+                  area: "{{ config.ospf.networks[1].area }}"
+        validate_certs: no
+        status_code: [200, 201, 204]
+
+    - name: Stap 8 - Verificatie hostname via RESTCONF GET
+      uri:
+        url: "{{ base_url }}/hostname"
+        method: GET
+        user: "{{ username }}"
+        password: "{{ password }}"
+        force_basic_auth: yes
+        headers: "{{ headers }}"
+        validate_certs: no
+      register: verify_hostname
+
+    - name: Stap 9 - Toon verificatie resultaat
+      debug:
+        msg: "Verificatie: {{ verify_hostname.json }}"
