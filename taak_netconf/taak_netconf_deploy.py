@@ -120,7 +120,7 @@ def verificatie():
       </native>
     </filter>"""
 
-    resultaat = conn.get_config(source="running", filter=filter_xml)
+    resultaat = conn.get_config(source="running")
     conn.close_session()
 
     # Pretty-print XML tonen
