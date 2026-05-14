@@ -1,0 +1,25 @@
+{
+  "hostname": "CSR1kv-Task39",
+  "interfaces": [
+    {
+      "name": "1",
+      "description": "LAN - Task39",
+      "address": "192.168.100.20",
+      "mask": "255.255.255.0"
+    },
+    {
+      "name": "2",
+      "description": "WAN - Task39",
+      "address": "172.16.0.8",
+      "mask": "255.255.255.0"
+    }
+  ],
+  "ospf": {
+    "id": 1,
+    "router_id": "1.1.1.1",
+    "networks": [
+      {"ip": "192.168.100.0", "mask": "0.0.0.255", "area": 0},
+      {"ip": "172.16.0.0", "mask": "0.0.0.255", "area": 0}
+    ]
+  }
+}
