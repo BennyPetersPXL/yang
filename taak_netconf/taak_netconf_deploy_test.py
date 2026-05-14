@@ -103,12 +103,7 @@ def deploy(conn, config_xml):
 def verificatie():
     """Basisvaardigheid: GET uitvoeren, pretty-print XML en parsen naar dictionary."""
     conn = maak_verbinding()
-    filter_xml = ("subtree", """
-<native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
-  <hostname/>
-  <interface/>
-</native>""")
-    resultaat = conn.get_config(source="running", filter=filter_xml)
+    resultaat = conn.get_config(source="running")
     conn.close_session()
     print("\n    Running config (pretty-print XML):")
     print("    " + "-" * 40)
