@@ -63,15 +63,13 @@ def ssh_patch():
     paramiko.Transport.__init__ = patch
 
 
-def verbind():
-    """NETCONF verbinding openen via SSH poort 830."""
-    ssh_patch()
+def verificatie():
+    """Basisvaardigheid: GET uitvoeren, pretty-print XML en parsen naar dictionary."""
     try:
         conn = manager.connect(**DEVICE)
     except Exception as e:
-        sys.exit("FOUT - Verbinding mislukt: {}".format(e))
-    print("    Verbonden, session-id: {}".format(conn.session_id))
-    return conn
+        print("    Verificatie mislukt: {}".format(e))
+        return
 
 
 def deploy(conn, config_xml):
