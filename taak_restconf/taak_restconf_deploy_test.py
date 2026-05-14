@@ -20,7 +20,7 @@ HEADERS    = {
     "Accept":       "application/yang-data+json",
 }
 
-GITHUB_URL = "https://raw.githubusercontent.com/BennyPetersPXL/yang/refs/heads/main/taak_restconf/taak_restconf_ios_xe_config.json"
+GITHUB_URL = "https://raw.githubusercontent.com/BennyPetersPXL/yang/refs/heads/main/taak_restconf/taak_restconf_ios_xe_config_test.json"
 
 
 def pretty_print_json(data):
