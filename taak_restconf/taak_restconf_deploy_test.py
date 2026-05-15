@@ -12,8 +12,8 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 DEVICE_IP = "192.168.100.20"
-USERNAME  = "admin"
-PASSWORD  = "pxl"
+USERNAME  = "cisco"
+PASSWORD  = "cisco123"
 BASE_URL  = "https://{}/restconf/data/Cisco-IOS-XE-native:native".format(DEVICE_IP)
 HEADERS   = {
     "Content-Type": "application/yang-data+json",
