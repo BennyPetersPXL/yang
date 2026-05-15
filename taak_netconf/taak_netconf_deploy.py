@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-Taak NETCONF - End-to-end automatisering
-Router: LAB-RA04-C02-R01 (172.17.4.65)
+Taak NETCONF - Deploy hardware
+Router: LAB-RA04-C02-R01 - 172.17.4.65
 """
 
 import sys
-import paramiko
 import requests
 import xml.dom.minidom
 import xml.etree.ElementTree as ET
 from ncclient import manager
 from ncclient.operations import RPCError
+import paramiko
 
 DEVICE = {
     "host":           "172.17.4.65",
@@ -26,6 +26,11 @@ DEVICE = {
 
 GITHUB_URL = "https://raw.githubusercontent.com/BennyPetersPXL/yang/refs/heads/main/taak_netconf/taak_netconf_ios_xe_config.xml"
 
+print("=" * 44)
+print("Taak NETCONF - {}".format(DEVICE["host"]))
+print("=" * 44)
+
+
 def pretty_print_xml(xml_string):
     """Basisvaardigheid: XML pretty-print via toprettyxml."""
     try:
@@ -37,7 +42,10 @@ def pretty_print_xml(xml_string):
 def parse_xml(xml_string):
     """Basisvaardigheid: XML deserialiseren naar Python dictionary."""
     ns = {"ios": "http://cisco.com/ns/yang/Cisco-IOS-XE-native"}
-    root = ET.fromstring(xml_string)
+    try:
+        root = ET.fromstring(xml_string)
+    except Exception:
+        return {}
     result = {}
     hostname = root.find(".//ios:hostname", ns)
     if hostname is not None:
@@ -47,125 +55,112 @@ def parse_xml(xml_string):
         naam = intf.find("ios:name", ns)
         ip   = intf.find(".//ios:address/ios:primary/ios:address", ns)
         result["interfaces"].append({
-            "naam": naam.text if naam is not None else "?",
-            "ip":   ip.text   if ip   is not None else "?",
+            "naam": "Gi" + (naam.text if naam is not None else "?"),
+            "ip":   ip.text if ip is not None else "?",
         })
     return result
 
 
 def ssh_patch():
-    """Paramiko patch voor ssh-rsa keys op oudere Cisco toestellen."""
-    oi = paramiko.Transport.__init__
-    def patch(self, *a, **k):
-        oi(self, *a, **k)
-        self._preferred_keys = ["ssh-rsa", "rsa-sha2-256", "rsa-sha2-512"]
-    paramiko.Transport.__init__ = patch
+    """Patch voor oudere IOS-XE ssh-rsa key exchange."""
+    transport = paramiko.transport.Transport
+    original  = transport._preferred_keys
+    if "ssh-rsa" not in original:
+        transport._preferred_keys = ["ssh-rsa"] + list(original)
 
 
-def verbind():
-    """NETCONF verbinding openen via SSH poort 830."""
-    ssh_patch()
-    try:
-        conn = manager.connect(**DEVICE)
-    except Exception as e:
-        sys.exit("FOUT - Verbinding mislukt: {}".format(e))
+# [1] Config ophalen van GitHub
+print("\n[1] Config ophalen van GitHub")
+r = requests.get(GITHUB_URL, timeout=10)
+if r.status_code != 200:
+    print("    FOUT: GitHub niet bereikbaar ({})".format(r.status_code))
+    sys.exit(1)
+xml_config = r.text
+print("    {} bytes opgehaald".format(len(r.content)))
+
+
+# [2] NETCONF verbinding openen
+print("\n[2] NETCONF verbinding openen")
+ssh_patch()
+try:
+    conn = manager.connect(**DEVICE)
     print("    Verbonden, session-id: {}".format(conn.session_id))
-    return conn
+except Exception as e:
+    print("    FOUT: {}".format(e))
+    sys.exit(1)
 
 
-def deploy(conn, config_xml):
-    """Candidate datastore: lock, edit-config, commit. Bij fout: discard-changes."""
-    locked = False
-    try:
-        conn.lock(target="candidate")
-        locked = True
-        print("    Candidate locked")
+# [3] Deployen via candidate datastore
+print("\n[3] Deployen via candidate datastore")
+try:
+    conn.lock(target="candidate")
+    print("    Candidate locked")
 
-        conn.edit_config(target="candidate", config=config_xml)
-        print("    edit-config geslaagd")
+    conn.edit_config(target="candidate", config=xml_config)
+    print("    edit-config geslaagd")
 
-        response = conn.commit()
+    reply = conn.commit()
+    xml_reply = pretty_print_xml(str(reply))
 
-        # Basisvaardigheid: NETCONF statusfeedback + pretty-print XML
-        print("\n    NETCONF response (pretty-print XML):")
-        print("    " + "-" * 40)
-        for regel in pretty_print_xml(str(response)).splitlines():
-            print("    " + regel)
-        print("    " + "-" * 40)
+    print("\n    NETCONF response (pretty-print XML):")
+    print("    " + "-" * 38)
+    for line in xml_reply.splitlines():
+        print("    " + line)
+    print("    " + "-" * 38)
 
-        if "<ok" in str(response):
-            print("    Statusfeedback: <ok/> ontvangen - commit geslaagd")
-
-    except RPCError as e:
-        # Basisvaardigheid: foutafhandeling met discard-changes
-        print("FOUT - {}: {}".format(e.type, e.tag))
+    if "<ok/>" in str(reply):
+        print("    Statusfeedback: <ok/> ontvangen - commit geslaagd")
+    else:
+        print("    FOUT: geen <ok/> ontvangen")
         conn.discard_changes()
-        print("discard-changes uitgevoerd - running config ongewijzigd")
+        conn.unlock(target="candidate")
         sys.exit(1)
 
-    finally:
-        if locked:
-            conn.unlock(target="candidate")
-        conn.close_session()
+except RPCError as e:
+    print("    RPC FOUT: {}".format(e))
+    conn.discard_changes()
+    conn.unlock(target="candidate")
+    sys.exit(1)
+
+conn.close_session()
 
 
-def verificatie():
-    """Basisvaardigheid: GET uitvoeren, pretty-print XML en parsen naar dictionary."""
-    conn = verbind()
+# [4] Verificatie via NETCONF GET
+print("\n[4] Verificatie via NETCONF GET")
+ssh_patch()
+try:
+    conn2 = manager.connect(**DEVICE)
+    print("    Verbonden, session-id: {}".format(conn2.session_id))
+
     filter_xml = """
-    <filter type="subtree">
-      <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
-        <hostname/>
-        <interface/>
-      </native>
-    </filter>"""
+<filter type="subtree">
+  <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
+    <hostname/>
+    <interface/>
+  </native>
+</filter>"""
 
-    resultaat = conn.get_config(source="running")
-    conn.close_session()
+    result = conn2.get(filter=filter_xml)
+    xml_data = pretty_print_xml(str(result))
 
-    # Pretty-print XML tonen
     print("\n    Running config (pretty-print XML):")
-    print("    " + "-" * 40)
-    for regel in pretty_print_xml(str(resultaat)).splitlines()[:20]:
-        print("    " + regel)
-    print("    " + "-" * 40)
+    print("    " + "-" * 38)
+    for line in xml_data.splitlines()[:30]:
+        print("    " + line)
+    print("    " + "-" * 38)
 
-    # Deserialiseren naar Python dictionary
-    parsed = parse_xml(str(resultaat))
+    parsed = parse_xml(str(result))
     print("\n    Geparseerde datastructuur (Python dictionary):")
-    print("    hostname:  {}".format(parsed.get("hostname")))
+    print("    hostname: ", parsed.get("hostname", "?"))
     for intf in parsed.get("interfaces", []):
-        print("    interface: Gi{} - {}".format(intf["naam"], intf["ip"]))
+        print("    interface: {} - {}".format(intf["naam"], intf["ip"]))
+
+    conn2.close_session()
+
+except Exception as e:
+    print("    Verificatie mislukt: {}".format(e))
 
 
-def main():
-    print("=" * 45)
-    print("Taak NETCONF - {}".format(DEVICE["host"]))
-    print("=" * 45)
-
-    # Stap 1: Config ophalen van GitHub (single source of truth)
-    print("\n[1] Config ophalen van GitHub")
-    try:
-        r = requests.get(GITHUB_URL, timeout=15)
-        r.raise_for_status()
-    except Exception as e:
-        sys.exit("FOUT: {}".format(e))
-    print("    {} bytes opgehaald".format(len(r.text)))
-
-    # Stap 2: Verbinding openen
-    print("\n[2] NETCONF verbinding openen")
-    conn = verbind()
-
-    # Stap 3: Deployen via candidate datastore
-    print("\n[3] Deployen via candidate datastore")
-    deploy(conn, r.text)
-
-    # Stap 4: Verificatie
-    print("\n[4] Verificatie via NETCONF GET")
-    verificatie()
-
-    print("\nDeployment afgerond.")
-
-
-if __name__ == "__main__":
-    main()
+print("\n" + "=" * 44)
+print("Deployment afgerond.")
+print("=" * 44)

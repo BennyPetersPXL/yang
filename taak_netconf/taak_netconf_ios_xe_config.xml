@@ -1,26 +1,19 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
 
-    <hostname>LAB-RA04-C02-R01</hostname>
+    <hostname>LAB-RA04-C02-R01-NETCONF</hostname>
+
+    <banner>
+      <motd>
+        <banner>Geconfigureerd via NETCONF - Network as Code</banner>
+      </motd>
+    </banner>
 
     <interface>
-      <GigabitEthernet>
-        <name>0/0/0.1</name>
-        <description>Management VLAN1</description>
-        <ip>
-          <address>
-            <primary>
-              <address>172.17.4.65</address>
-              <mask>255.255.255.240</mask>
-            </primary>
-          </address>
-        </ip>
-      </GigabitEthernet>
 
       <GigabitEthernet>
         <name>0/0/1</name>
-        <description>WAN uplink</description>
+        <description>WAN uplink - NETCONF</description>
         <ip>
           <address>
             <primary>
@@ -30,12 +23,26 @@
           </address>
         </ip>
       </GigabitEthernet>
+
+      <Loopback>
+        <name>0</name>
+        <description>Loopback NETCONF</description>
+        <ip>
+          <address>
+            <primary>
+              <address>1.1.1.1</address>
+              <mask>255.255.255.255</mask>
+            </primary>
+          </address>
+        </ip>
+      </Loopback>
+
     </interface>
 
     <router>
       <ospf xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ospf">
         <id>1</id>
-        <router-id>172.17.4.65</router-id>
+        <router-id>1.1.1.1</router-id>
         <network>
           <ip>172.17.4.64</ip>
           <mask>0.0.0.15</mask>
@@ -44,6 +51,11 @@
         <network>
           <ip>10.199.65.96</ip>
           <mask>0.0.0.31</mask>
+          <area>0</area>
+        </network>
+        <network>
+          <ip>1.1.1.1</ip>
+          <mask>0.0.0.0</mask>
           <area>0</area>
         </network>
       </ospf>
