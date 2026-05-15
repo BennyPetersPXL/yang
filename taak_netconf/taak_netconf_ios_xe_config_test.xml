@@ -9,14 +9,6 @@
       </motd>
     </banner>
 
-    <ntp>
-      <server xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ntp">
-        <server-list>
-          <ip-address>216.239.35.0</ip-address>
-        </server-list>
-      </server>
-    </ntp>
-
     <interface>
 
       <GigabitEthernet>
