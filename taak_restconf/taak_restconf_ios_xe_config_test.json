@@ -1,7 +1,6 @@
 {
   "hostname": "CSR1kv-RESTCONF-Test",
   "banner": "Geconfigureerd via RESTCONF - Network as Code",
-  "ntp_server": "216.239.35.0",
   "interfaces": [
     {
       "name": "1",
@@ -27,8 +26,8 @@
     "router_id": "2.2.2.2",
     "networks": [
       {"ip": "192.168.100.0", "mask": "0.0.0.255", "area": 0},
-      {"ip": "172.16.0.0", "mask": "0.0.0.255", "area": 0},
-      {"ip": "2.2.2.2", "mask": "0.0.0.0", "area": 0}
+      {"ip": "172.16.0.0",    "mask": "0.0.0.255", "area": 0},
+      {"ip": "2.2.2.2",       "mask": "0.0.0.0",   "area": 0}
     ]
   }
 }
