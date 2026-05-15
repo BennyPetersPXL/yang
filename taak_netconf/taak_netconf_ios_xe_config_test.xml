@@ -1,12 +1,27 @@
 <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0">
   <native xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-native">
 
-    <hostname>CSR1kv-Test</hostname>
+    <hostname>CSR1kv-NETCONF-Test</hostname>
+
+    <banner>
+      <motd>
+        <banner>Geconfigureerd via NETCONF - Network as Code</banner>
+      </motd>
+    </banner>
+
+    <ntp>
+      <server xmlns="http://cisco.com/ns/yang/Cisco-IOS-XE-ntp">
+        <server-list>
+          <ip-address>216.239.35.0</ip-address>
+        </server-list>
+      </server>
+    </ntp>
 
     <interface>
+
       <GigabitEthernet>
         <name>1</name>
-        <description>LAN - Test</description>
+        <description>LAN - NETCONF Test</description>
         <ip>
           <address>
             <primary>
@@ -19,7 +34,7 @@
 
       <GigabitEthernet>
         <name>2</name>
-        <description>WAN - Test</description>
+        <description>WAN - NETCONF Test</description>
         <ip>
           <address>
             <primary>
@@ -29,6 +44,20 @@
           </address>
         </ip>
       </GigabitEthernet>
+
+      <Loopback>
+        <name>0</name>
+        <description>Loopback NETCONF</description>
+        <ip>
+          <address>
+            <primary>
+              <address>1.1.1.1</address>
+              <mask>255.255.255.255</mask>
+            </primary>
+          </address>
+        </ip>
+      </Loopback>
+
     </interface>
 
     <router>
@@ -43,6 +72,11 @@
         <network>
           <ip>172.16.0.0</ip>
           <mask>0.0.0.255</mask>
+          <area>0</area>
+        </network>
+        <network>
+          <ip>1.1.1.1</ip>
+          <mask>0.0.0.0</mask>
           <area>0</area>
         </network>
       </ospf>
