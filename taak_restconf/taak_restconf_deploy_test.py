@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Taak RESTCONF - End-to-end automatisering
-Router: LAB-RA04-C02-R01 (192.168.100.20)
+Virtuele router: CSR1000v (192.168.100.20)
 """
 
 import sys
@@ -107,9 +107,10 @@ def main():
 
     # Stap 2: Config parsen (deserialiseren: JSON naar Python dictionary)
     print("\n[2] Config parsen")
-    print("    hostname:  {}".format(config["hostname"]))
+    print("    hostname:   {}".format(config["hostname"]))
     for intf in config["interfaces"]:
-        print("    interface: Gi{} - {}".format(intf["name"], intf["address"]))
+        print("    interface:  {} - {}".format(intf["name"], intf["address"]))
+    print("    ntp server: {}".format(config.get("ntp_server", "niet geconfigureerd")))
 
     # Stap 3: Hostname deployen
     print("\n[3] Hostname deployen via RESTCONF PUT")
@@ -117,22 +118,72 @@ def main():
             {"Cisco-IOS-XE-native:hostname": config["hostname"]})
     controleer_status("hostname", r)
 
-    # Stap 4: Interfaces deployen
-    print("\n[4] Interfaces deployen via RESTCONF PUT")
-    for intf in config["interfaces"]:
-        body = {"Cisco-IOS-XE-native:GigabitEthernet": [{
-            "name":        intf["name"],
-            "description": intf["description"],
-            "ip": {"address": {"primary": {
-                "address": intf["address"],
-                "mask":    intf["mask"]
-            }}}
-        }]}
-        r = put("{}/interface/GigabitEthernet={}".format(BASE_URL, intf["name"]), body)
-        controleer_status("Gi{}".format(intf["name"]), r)
+    # Stap 4: Banner deployen
+    print("\n[4] Banner deployen via RESTCONF PUT")
+    body = {
+        "Cisco-IOS-XE-native:banner": {
+            "motd": {
+                "banner": config["banner"]
+            }
+        }
+    }
+    r = put("{}/banner".format(BASE_URL), body)
+    controleer_status("banner", r)
 
-    # Stap 5: OSPF deployen
-    print("\n[5] OSPF deployen via RESTCONF PUT")
+    # Stap 5: NTP deployen
+    print("\n[5] NTP deployen via RESTCONF PUT")
+    body = {
+        "Cisco-IOS-XE-ntp:ntp": {
+            "server": {
+                "server-list": [
+                    {"ip-address": config["ntp_server"]}
+                ]
+            }
+        }
+    }
+    r = requests.put(
+        "https://{}/restconf/data/Cisco-IOS-XE-native:native/ntp".format(DEVICE_IP),
+        auth=(USERNAME, PASSWORD),
+        headers=HEADERS,
+        json=body,
+        verify=False,
+        timeout=15
+    )
+    controleer_status("NTP", r)
+
+    # Stap 6: Interfaces deployen
+    print("\n[6] Interfaces deployen via RESTCONF PUT")
+    for intf in config["interfaces"]:
+        naam = intf["name"]
+        if naam.startswith("Loopback"):
+            url = "{}/interface/Loopback={}".format(BASE_URL, naam.replace("Loopback", ""))
+            body = {
+                "Cisco-IOS-XE-native:Loopback": [{
+                    "name":        int(naam.replace("Loopback", "")),
+                    "description": intf["description"],
+                    "ip": {"address": {"primary": {
+                        "address": intf["address"],
+                        "mask":    intf["mask"]
+                    }}}
+                }]
+            }
+        else:
+            url = "{}/interface/GigabitEthernet={}".format(BASE_URL, naam)
+            body = {
+                "Cisco-IOS-XE-native:GigabitEthernet": [{
+                    "name":        naam,
+                    "description": intf["description"],
+                    "ip": {"address": {"primary": {
+                        "address": intf["address"],
+                        "mask":    intf["mask"]
+                    }}}
+                }]
+            }
+        r = put(url, body)
+        controleer_status(naam, r)
+
+    # Stap 7: OSPF deployen
+    print("\n[7] OSPF deployen via RESTCONF PUT")
     ospf = config["ospf"]
     body = {"Cisco-IOS-XE-ospf:ospf": [{
         "id":        ospf["id"],
@@ -143,8 +194,8 @@ def main():
     r = put("{}/router/ospf={}".format(BASE_URL, ospf["id"]), body)
     controleer_status("OSPF", r)
 
-    # Stap 6: Verificatie via RESTCONF GET
-    print("\n[6] Verificatie via RESTCONF GET")
+    # Stap 8: Verificatie via RESTCONF GET
+    print("\n[8] Verificatie via RESTCONF GET")
     verificatie("{}/hostname".format(BASE_URL), "hostname")
     verificatie("{}/interface".format(BASE_URL), "interfaces")
 
