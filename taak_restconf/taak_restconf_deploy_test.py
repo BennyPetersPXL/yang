@@ -142,7 +142,7 @@ def main():
         }
     }
     r = requests.put(
-        "https://{}/restconf/data/Cisco-IOS-XE-native:native/ntp".format(DEVICE_IP),
+        "https://{}/restconf/data/Cisco-IOS-XE-native:native/Cisco-IOS-XE-ntp:ntp".format(DEVICE_IP),
         auth=(USERNAME, PASSWORD),
         headers=HEADERS,
         json=body,
