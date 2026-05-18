@@ -117,18 +117,16 @@ for intf in config["interfaces"]:
 print("\n[6] OSPF deployen via RESTCONF PUT")
 ospf = config["ospf"]
 body = {
-    "Cisco-IOS-XE-native:router": {
-        "Cisco-IOS-XE-ospf:ospf": [{
-            "id":        ospf["id"],
-            "router-id": ospf["router_id"],
-            "network":   [
-                {"ip": n["ip"], "mask": n["mask"], "area": n["area"]}
-                for n in ospf["networks"]
-            ]
-        }]
-    }
+    "Cisco-IOS-XE-ospf:ospf": [{
+        "id": ospf["id"],
+        "router-id": ospf["router_id"],
+        "network": [
+            {"ip": n["ip"], "mask": n["mask"], "area": n["area"]}
+            for n in ospf["networks"]
+        ]
+    }]
 }
-r = put("{}/router".format(BASE_URL), body)
+r = put("{}/router/ospf".format(BASE_URL), body)
 controleer_status("OSPF", r)
 
 
