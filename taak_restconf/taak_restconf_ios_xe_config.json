@@ -3,9 +3,9 @@
   "banner": "Geconfigureerd via RESTCONF - Network as Code",
   "interfaces": [
     {
-      "name": "0/0/1",
+      "name": "0/0/3",
       "description": "WAN uplink - RESTCONF",
-      "address": "10.199.65.108",
+      "address": "10.199.65.150",
       "mask": "255.255.255.224"
     },
     {
