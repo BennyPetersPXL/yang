@@ -9,7 +9,7 @@
       "mask": "255.255.255.224"
     },
     {
-      "name": "Loopback1",
+      "name": "Loopback0",
       "description": "Loopback RESTCONF",
       "address": "2.2.2.2",
       "mask": "255.255.255.255"
