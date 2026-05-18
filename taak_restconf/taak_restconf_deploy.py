@@ -98,7 +98,7 @@ for intf in config["interfaces"]:
             }]
         }
     else:
-        url = "{}/interface/GigabitEthernet={}".format(BASE_URL, naam)
+        url = "{}/interface/GigabitEthernet={}".format(BASE_URL, naam.replace("/", "%2F"))
         body = {
             "Cisco-IOS-XE-native:GigabitEthernet": [{
                 "name":        naam,
