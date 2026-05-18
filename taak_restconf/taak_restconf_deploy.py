@@ -46,7 +46,7 @@ print("    banner:    {}".format(config.get("banner", "-")))
 
 
 def put(url, body):
-    return requests.put(
+    return requests.patch(
         url, auth=(USERNAME, PASSWORD),
         headers=HEADERS, json=body,
         verify=False, timeout=15
