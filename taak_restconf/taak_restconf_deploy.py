@@ -46,7 +46,7 @@ print("    banner:    {}".format(config.get("banner", "-")))
 
 
 def put(url, body):
-    return requests.patch(
+    return requests.put(
         url, auth=(USERNAME, PASSWORD),
         headers=HEADERS, json=body,
         verify=False, timeout=15
@@ -98,10 +98,10 @@ for intf in config["interfaces"]:
             }]
         }
     else:
-        url = "{}/interface/GigabitEthernet={}".format(BASE_URL, naam.replace("/", "%2F"))
+        url = "https://{}/restconf/data/Cisco-IOS-XE-native:native/interface/GigabitEthernet=0%2F0%2F1".format(DEVICE_IP)
         body = {
             "Cisco-IOS-XE-native:GigabitEthernet": [{
-                "name":        naam,
+                "name":        "0/0/1",
                 "description": intf["description"],
                 "ip": {"address": {"primary": {
                     "address": intf["address"],
