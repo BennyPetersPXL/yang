@@ -126,7 +126,7 @@ body = {
         ]
     }]
 }
-r = put("{}/router/ospf".format(BASE_URL), body)
+r = put("{}/router/ospf=1".format(BASE_URL), body)
 controleer_status("OSPF", r)
 
 
