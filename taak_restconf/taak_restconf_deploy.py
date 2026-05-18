@@ -98,10 +98,10 @@ for intf in config["interfaces"]:
             }]
         }
     else:
-        url = "https://{}/restconf/data/Cisco-IOS-XE-native:native/interface/GigabitEthernet=0%2F0%2F1".format(DEVICE_IP)
+        url = "{}/interface/GigabitEthernet={}".format(BASE_URL, naam.replace("/", "%2F"))
         body = {
             "Cisco-IOS-XE-native:GigabitEthernet": [{
-                "name":        "0/0/1",
+                "name":        naam,
                 "description": intf["description"],
                 "ip": {"address": {"primary": {
                     "address": intf["address"],
